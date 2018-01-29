@@ -1,4 +1,4 @@
-## Prototyping the New Interface Types for Squid 
+## Prototyping the New Interface Types for Squid
 
 ### Goals
 
@@ -61,5 +61,17 @@ res: in[CodeIn[Double],{val n: Int}] = ...
 `sbt "+ test"` to compile and run the tests in Scala 2.11, 2.12 and Dotty
 
 `sbt "++ 0.4.0-RC1"` to switch to Dotty
+
+
+
+## Things to Keep in Mind / Take Into Consideration
+
+### Tight `Typ` Type and Type Representation Evidence
+
+The situation sometimes arises where we have a `cde: Code[T,C]` with no type evidence for `T` in scope, and propagating that evidence may not always be easy/feasible. If we compose `cde` into a bigger program, as in `code"($cde,1)"` Squid will complain about the lack of evidence.
+
+In Squid 0.x, we have to do contorsions to make it work: `code"(${cde.ofUnderlyingTyp} : ${cde.Typ}, 1)"` where `ofUnderlyingTyp` yields a `Code[cde.Typ,C]` and inserting `cde.Typ` is necessary to let Squid find the `CodeType[cde.Typ]` evidence. The call to `ofUnderlyingTyp` is necessary because Sala can't know (with good reason) that `T =:= cde.Typ` (or even that `T <: cde.Typ`) since `Code[_,C]` is covariant.
+
+Instead, it would be better that the quasiquote macro assign inserted terms the tight type by default (if it has a proper singleton representation; otherwise for simplicity fall back to `T`), and be able to retrieve that type representation automatically from the inserted term.
 
 
